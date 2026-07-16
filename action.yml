@@ -1,6 +1,6 @@
 name: "React Native Android Build & Publish"
 description: "Builds a React Native Android app and publishes it to the Google Play Store."
-author: "george"
+author: "George Chitechi"
 
 inputs:
   working-directory:
@@ -46,16 +46,16 @@ runs:
   using: "composite"
   steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
         cache: "npm"
         cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
 
     - name: Setup Java
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
-        distribution: "zulu"
+        distribution: "temurin"
         java-version: ${{ inputs.java-version }}
         cache: "gradle"
 

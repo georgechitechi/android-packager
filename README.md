@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build and Publish App
-        uses: george/creator@v1
+        uses: georgechitechi/android-packager@v1
         with:
           # Required Inputs
           keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
