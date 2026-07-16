@@ -1,0 +1,108 @@
+name: "React Native Android Build & Publish"
+description: "Builds a React Native Android app and publishes it to the Google Play Store."
+author: "george"
+
+inputs:
+  working-directory:
+    description: "The directory where the React Native app is located"
+    required: false
+    default: "."
+  node-version:
+    description: "Node.js version to use"
+    required: false
+    default: "24"
+  java-version:
+    description: "Java version to use (e.g. 21)"
+    required: false
+    default: "21"
+  keystore-base64:
+    description: "Base64 encoded Android keystore"
+    required: true
+  keystore-password:
+    description: "Password for the keystore"
+    required: true
+  key-alias:
+    description: "Alias for the key"
+    required: true
+  key-password:
+    description: "Password for the key"
+    required: true
+  service-account-json:
+    description: "Google Play Console service account JSON (plain text)"
+    required: true
+  package-name:
+    description: "The Android application package name (e.g. com.example.app)"
+    required: true
+  track:
+    description: "The Google Play track (internal, alpha, beta, production)"
+    required: false
+    default: "internal"
+  build-type:
+    description: "Build type: aab or apk"
+    required: false
+    default: "aab"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: "npm"
+        cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: "zulu"
+        java-version: ${{ inputs.java-version }}
+        cache: "gradle"
+
+    - name: Install npm dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npm install
+
+    - name: Decode Keystore
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}/android/app
+      run: |
+        echo "${{ inputs.keystore-base64 }}" | base64 --decode > release.keystore
+
+    - name: Build Android App
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}/android
+      run: |
+        if [ "${{ inputs.build-type }}" == "aab" ]; then
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=release.keystore \
+            -Pandroid.injected.signing.store.password=${{ inputs.keystore-password }} \
+            -Pandroid.injected.signing.key.alias=${{ inputs.key-alias }} \
+            -Pandroid.injected.signing.key.password=${{ inputs.key-password }}
+        else
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=release.keystore \
+            -Pandroid.injected.signing.store.password=${{ inputs.keystore-password }} \
+            -Pandroid.injected.signing.key.alias=${{ inputs.key-alias }} \
+            -Pandroid.injected.signing.key.password=${{ inputs.key-password }}
+        fi
+
+    - name: Identify Output File
+      shell: bash
+      id: output-file
+      run: |
+        if [ "${{ inputs.build-type }}" == "aab" ]; then
+          FILE_PATH="${{ inputs.working-directory }}/android/app/build/outputs/bundle/release/app-release.aab"
+        else
+          FILE_PATH="${{ inputs.working-directory }}/android/app/build/outputs/apk/release/app-release.apk"
+        fi
+        echo "file_path=$FILE_PATH" >> $GITHUB_OUTPUT
+
+    - name: Upload to Google Play
+      uses: r0adkll/upload-google-play@v1
+      with:
+        serviceAccountJsonPlainText: ${{ inputs.service-account-json }}
+        packageName: ${{ inputs.package-name }}
+        releaseFiles: ${{ steps.output-file.outputs.file_path }}
+        track: ${{ inputs.track }}
