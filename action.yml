@@ -29,10 +29,10 @@ inputs:
     required: true
   service-account-json:
     description: "Google Play Console service account JSON (plain text)"
-    required: true
+    required: false
   package-name:
     description: "The Android application package name (e.g. com.example.app)"
-    required: true
+    required: false
   track:
     description: "The Google Play track (internal, alpha, beta, production)"
     required: false
@@ -41,6 +41,14 @@ inputs:
     description: "Build type: aab or apk"
     required: false
     default: "aab"
+  publish-to-play-store:
+    description: "Whether to publish the app to Google Play Store"
+    required: false
+    default: "false"
+  save-to-releases:
+    description: "Whether to upload the build to GitHub Releases (only runs on tag pushes)"
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
@@ -100,9 +108,23 @@ runs:
         echo "file_path=$FILE_PATH" >> $GITHUB_OUTPUT
 
     - name: Upload to Google Play
+      if: ${{ inputs.publish-to-play-store == 'true' }}
       uses: r0adkll/upload-google-play@v1
       with:
         serviceAccountJsonPlainText: ${{ inputs.service-account-json }}
         packageName: ${{ inputs.package-name }}
         releaseFiles: ${{ steps.output-file.outputs.file_path }}
         track: ${{ inputs.track }}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: app-release-${{ inputs.build-type }}
+        path: ${{ steps.output-file.outputs.file_path }}
+        retention-days: 14
+
+    - name: Upload to GitHub Releases
+      if: ${{ inputs.save-to-releases == 'true' && github.ref_type == 'tag' }}
+      uses: softprops/action-gh-release@v3
+      with:
+        files: ${{ steps.output-file.outputs.file_path }}

@@ -29,13 +29,16 @@ jobs:
           keystore-password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
           key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          service-account-json: ${{ secrets.PLAY_CONSOLE_JSON }}
-          package-name: 'com.yourcompany.app'
+          # Google Play Console (Optional if publish-to-play-store is true)
+          # service-account-json: ${{ secrets.PLAY_CONSOLE_JSON }}
+          # package-name: 'com.yourcompany.app'
           
           # Optional Inputs
+          # publish-to-play-store: 'false'
+          # save-to-releases: 'true'
           # working-directory: '.'
-          # node-version: '18'
-          # java-version: '17'
+          # node-version: '24'
+          # java-version: '21'
           # track: 'internal' # Options: internal, alpha, beta, production
           # build-type: 'aab' # Options: aab, apk
 ```
@@ -45,16 +48,18 @@ jobs:
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
 | `working-directory` | The directory where the React Native app is located | No | `.` |
-| `node-version` | Node.js version to use | No | `18` |
-| `java-version` | Java version to use (e.g. 17) | No | `17` |
+| `node-version` | Node.js version to use | No | `24` |
+| `java-version` | Java version to use (e.g. 21) | No | `21` |
 | `keystore-base64` | Base64 encoded Android keystore | **Yes** | |
 | `keystore-password` | Password for the keystore | **Yes** | |
 | `key-alias` | Alias for the key | **Yes** | |
 | `key-password` | Password for the key | **Yes** | |
-| `service-account-json`| Google Play Console service account JSON | **Yes** | |
-| `package-name` | The Android application package name | **Yes** | |
+| `service-account-json`| Google Play Console service account JSON | No | |
+| `package-name` | The Android application package name | No | |
 | `track` | The Google Play track (`internal`, `alpha`, `beta`, `production`) | No | `internal` |
 | `build-type` | Build type: `aab` or `apk` | No | `aab` |
+| `publish-to-play-store`| Whether to publish the app to Google Play Store | No | `false` |
+| `save-to-releases`| Whether to upload the build to GitHub Releases | No | `true` |
 
 ## Setup Instructions
 
